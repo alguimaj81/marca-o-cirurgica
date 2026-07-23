@@ -1,0 +1,1145 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Central Inteligente de Jornada Cirúrgica — SUS</title>
+    <style>
+        :root {
+            --primary: #0f766e;
+            --primary-dark: #134e4a;
+            --success: #059669;
+            --warning: #d97706;
+            --danger: #dc2626;
+            --gray-50: #f8fafc;
+            --gray-100: #f1f5f9;
+            --gray-200: #e2e8f0;
+            --gray-300: #cbd5e1;
+            --gray-400: #94a3b8;
+            --gray-500: #64748b;
+            --gray-600: #475569;
+            --gray-700: #334155;
+            --gray-800: #1e293b;
+            --gray-900: #0f172a;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: var(--gray-50);
+            color: var(--gray-800);
+            line-height: 1.5;
+        }
+
+        .container { max-width: 1200px; margin: 0 auto; padding: 16px; }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            padding: 24px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+        }
+        .header h1 { font-size: 22px; font-weight: 700; }
+        .header p { margin-top: 6px; opacity: 0.9; font-size: 14px; }
+
+        /* KPI Cards */
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        .kpi-card {
+            background: white;
+            padding: 16px;
+            border-radius: 10px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .kpi-card.success { border-left: 4px solid var(--success); }
+        .kpi-card.info { border-left: 4px solid #0ea5e9; }
+        .kpi-card.warning { border-left: 4px solid var(--warning); }
+        .kpi-card.danger { border-left: 4px solid var(--danger); }
+        .kpi-label { font-size: 11px; color: var(--gray-500); text-transform: uppercase; letter-spacing: 0.5px; }
+        .kpi-value { font-size: 28px; font-weight: 700; margin-top: 4px; }
+        .kpi-card.success .kpi-value { color: var(--success); }
+        .kpi-card.info .kpi-value { color: #0ea5e9; }
+        .kpi-card.warning .kpi-value { color: var(--warning); }
+        .kpi-card.danger .kpi-value { color: var(--danger); }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            gap: 4px;
+            margin-bottom: 16px;
+            background: white;
+            padding: 4px;
+            border-radius: 10px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+        }
+        .tab-btn {
+            flex: 1;
+            padding: 10px 16px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 13px;
+            background: transparent;
+            color: var(--gray-600);
+            transition: all 0.2s;
+        }
+        .tab-btn:hover { background: var(--gray-100); }
+        .tab-btn.active { background: var(--primary); color: white; }
+
+        /* Panels */
+        .panel { display: none; }
+        .panel.active { display: block; }
+
+        /* Cards */
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+            margin-bottom: 16px;
+        }
+        .card-title {
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--gray-800);
+            margin-bottom: 16px;
+        }
+
+        /* Grid */
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        @media (max-width: 768px) { .grid-2 { grid-template-columns: 1fr; } }
+
+        /* Alert items */
+        .alert-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid var(--gray-100);
+        }
+        .alert-item:last-child { border-bottom: none; }
+        .alert-info { display: flex; align-items: center; gap: 8px; }
+        .alert-icon { font-size: 18px; }
+        .alert-name { font-size: 13px; font-weight: 500; color: var(--gray-700); }
+        .badge-group { display: flex; gap: 6px; }
+        .badge {
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+        .badge-green { background: #dcfce7; color: #166534; }
+        .badge-yellow { background: #fef3c7; color: #92400e; }
+        .badge-red { background: #fee2e2; color: #991b1b; }
+
+        /* Progress bars */
+        .progress-item { margin-bottom: 12px; }
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 4px;
+        }
+        .progress-label { font-size: 12px; color: var(--gray-600); }
+        .progress-value { font-size: 12px; font-weight: 700; }
+        .progress-bar-bg {
+            background: var(--gray-100);
+            border-radius: 6px;
+            height: 10px;
+            overflow: hidden;
+        }
+        .progress-bar-fill {
+            height: 100%;
+            border-radius: 6px;
+            transition: width 0.5s ease;
+        }
+
+        /* Patient cards */
+        .patient-card {
+            background: white;
+            border-radius: 12px;
+            padding: 18px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+            margin-bottom: 12px;
+            transition: box-shadow 0.2s;
+        }
+        .patient-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .patient-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            cursor: pointer;
+        }
+        .patient-info { flex: 1; }
+        .patient-name-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 4px;
+            flex-wrap: wrap;
+        }
+        .patient-name { font-size: 14px; font-weight: 700; color: var(--gray-800); }
+        .status-badge {
+            padding: 2px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+        .status-pronto { background: #dcfce7; color: #166534; }
+        .status-atencao { background: #fef3c7; color: #92400e; }
+        .status-risco { background: #fee2e2; color: #991b1b; }
+        .patient-meta {
+            font-size: 12px;
+            color: var(--gray-500);
+            line-height: 1.6;
+        }
+        .patient-header-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .icon-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 15px;
+            color: var(--gray-400);
+            padding: 4px 6px;
+            border-radius: 6px;
+            line-height: 1;
+        }
+        .icon-btn:hover { background: var(--gray-100); color: var(--danger); }
+        .patient-arrow {
+            font-size: 18px;
+            color: var(--gray-400);
+            transition: transform 0.2s;
+            background: none;
+            border: none;
+            cursor: pointer;
+        }
+        .patient-arrow.rotated { transform: rotate(180deg); }
+
+        .patient-detail {
+            display: none;
+            margin-top: 16px;
+            padding-top: 16px;
+            border-top: 1px solid var(--gray-100);
+        }
+        .patient-detail.open { display: block; }
+
+        .detail-section { margin-bottom: 14px; }
+        .detail-title {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+        }
+        .detail-title.danger { color: var(--danger); }
+        .detail-title.success { color: var(--success); }
+        .detail-title.info { color: var(--gray-600); }
+
+        .pendencia-box {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+            background: #fef2f2;
+            border-left: 3px solid var(--danger);
+            padding: 10px 12px;
+            border-radius: 6px;
+            margin-bottom: 6px;
+        }
+        .pendencia-text { font-size: 12px; font-weight: 600; color: #7f1d1d; }
+        .pendencia-meta { font-size: 11px; color: #b91c1c; margin-top: 2px; }
+        .pendencia-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-shrink: 0;
+        }
+        .pendencia-status {
+            background: #fecaca;
+            color: #991b1b;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 10px;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+        .btn-resolver {
+            background: var(--success);
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+        .btn-resolver:hover { background: #047857; }
+
+        .concluido-box {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+        .concluido-tag {
+            background: #f0fdf4;
+            color: #166534;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 11px;
+        }
+
+        .comunicacao-box {
+            background: var(--gray-50);
+            padding: 12px;
+            border-radius: 8px;
+        }
+        .comunicacao-text { font-size: 12px; color: var(--gray-500); }
+
+        /* Form */
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+        }
+        @media (max-width: 768px) { .form-grid { grid-template-columns: 1fr; } }
+
+        .form-group { display: flex; flex-direction: column; }
+        .form-label {
+            font-size: 12px;
+            color: var(--gray-500);
+            margin-bottom: 4px;
+            font-weight: 500;
+        }
+        .form-input, .form-select, .form-textarea {
+            padding: 10px 12px;
+            border: 1px solid var(--gray-300);
+            border-radius: 8px;
+            font-size: 13px;
+            font-family: inherit;
+            background: white;
+        }
+        .form-input:focus, .form-select:focus, .form-textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(15,118,110,0.1);
+        }
+        .form-textarea { min-height: 80px; resize: vertical; }
+        .field-error {
+            font-size: 11px;
+            color: var(--danger);
+            margin-top: 4px;
+            display: none;
+        }
+        .field-error.show { display: block; }
+        .form-input.invalid, .form-select.invalid { border-color: var(--danger); }
+
+        .btn {
+            padding: 12px 28px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+        .btn-primary:hover { background: var(--primary-dark); }
+        .btn-secondary {
+            background: var(--gray-100);
+            color: var(--gray-600);
+            border: 1px solid var(--gray-300);
+        }
+        .btn-secondary:hover { background: var(--gray-200); }
+
+        .success-msg {
+            display: none;
+            margin-top: 16px;
+            padding: 14px;
+            background: #ecfdf5;
+            border: 1px solid #a7f3d0;
+            border-radius: 8px;
+            color: #065f46;
+            font-size: 13px;
+        }
+        .success-msg.show { display: block; }
+
+        /* Search bar */
+        .search-bar {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+        .search-input {
+            flex: 1;
+            padding: 10px 14px;
+            border: 1px solid var(--gray-300);
+            border-radius: 8px;
+            font-size: 13px;
+        }
+
+        /* Flow */
+        .flow-step {
+            display: flex;
+            gap: 14px;
+        }
+        .flow-connector {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .flow-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 16px;
+            flex-shrink: 0;
+        }
+        .flow-line {
+            width: 2px;
+            height: 30px;
+            background: var(--gray-300);
+            margin: 4px 0;
+        }
+        .flow-content { flex: 1; padding-bottom: 12px; }
+        .flow-title { font-size: 13px; font-weight: 700; color: var(--gray-800); }
+        .flow-desc { font-size: 12px; color: var(--gray-500); margin-top: 2px; }
+        .flow-actor { font-size: 11px; color: var(--primary); font-weight: 500; margin-top: 3px; }
+
+        /* IA Summary */
+        .ia-summary {
+            background: #f0fdfa;
+            border-left: 3px solid var(--primary);
+            padding: 14px 18px;
+            border-radius: 8px;
+            font-size: 13px;
+            line-height: 1.7;
+            color: var(--primary-dark);
+        }
+        .ia-summary .ia-empty { color: var(--gray-500); }
+
+        /* Filters */
+        .filter-bar {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+        }
+        .filter-select {
+            padding: 8px 12px;
+            border: 1px solid var(--gray-300);
+            border-radius: 8px;
+            font-size: 13px;
+            background: white;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: var(--gray-400);
+        }
+    </style>
+<base target="_blank">
+</head>
+<body>
+    <div class="container">
+
+        <!-- HEADER -->
+        <div class="header">
+            <h1>🏥 Central Inteligente de Jornada Cirúrgica — SUS</h1>
+            <p>Sistema de automação da jornada cirúrgica com IA assistiva</p>
+        </div>
+
+        <!-- KPI CARDS (calculados a partir dos pacientes cadastrados) -->
+        <div class="kpi-grid" id="kpi-grid"></div>
+
+        <!-- TABS -->
+        <div class="tabs">
+            <button class="tab-btn active" onclick="showTab('dashboard', this)">📊 Painel Geral</button>
+            <button class="tab-btn" onclick="showTab('pacientes', this)">👤 Pacientes</button>
+            <button class="tab-btn" onclick="showTab('solicitacao', this)">📝 Nova Solicitação</button>
+            <button class="tab-btn" onclick="showTab('fluxo', this)">🔄 Fluxo da Jornada</button>
+        </div>
+
+        <!-- TAB: DASHBOARD -->
+        <div id="panel-dashboard" class="panel active">
+            <div class="grid-2">
+                <div class="card">
+                    <div class="card-title">⚠️ Alertas por Setor</div>
+                    <div id="alertas-setor"></div>
+                </div>
+                <div class="card">
+                    <div class="card-title">📈 Status das Cirurgias</div>
+                    <div id="status-cirurgias"></div>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-title">🤖 Resumo Diário (calculado a partir dos dados atuais)</div>
+                <div class="ia-summary" id="ia-summary"></div>
+            </div>
+        </div>
+
+        <!-- TAB: PACIENTES -->
+        <div id="panel-pacientes" class="panel">
+            <div class="filter-bar">
+                <input type="text" class="search-input" id="search-paciente" placeholder="Buscar paciente, CNS ou procedimento..." oninput="filtrarPacientes()">
+                <select class="filter-select" id="filter-status" onchange="filtrarPacientes()">
+                    <option value="">Todos os status</option>
+                    <option value="pronto">🟢 Pronto</option>
+                    <option value="atencao">🟡 Atenção</option>
+                    <option value="risco">🔴 Risco</option>
+                </select>
+                <select class="filter-select" id="filter-especialidade" onchange="filtrarPacientes()">
+                    <option value="">Todas especialidades</option>
+                    <option value="Cirurgia Geral">Cirurgia Geral</option>
+                    <option value="Ortopedia">Ortopedia</option>
+                    <option value="Ginecologia">Ginecologia</option>
+                    <option value="Oftalmologia">Oftalmologia</option>
+                </select>
+            </div>
+            <div id="lista-pacientes"></div>
+        </div>
+
+        <!-- TAB: SOLICITACAO -->
+        <div id="panel-solicitacao" class="panel">
+            <div class="card">
+                <div class="card-title">📝 Nova Solicitação Cirúrgica</div>
+                <form id="form-solicitacao" onsubmit="return salvarSolicitacao(event)" novalidate>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label class="form-label" for="f-nome">Nome do Paciente *</label>
+                            <input type="text" class="form-input" id="f-nome" name="nome" placeholder="Digite o nome completo" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="f-cns">CNS *</label>
+                            <input type="text" class="form-input" id="f-cns" name="cns" placeholder="Número do CNS (15 dígitos)" inputmode="numeric" maxlength="15" required>
+                            <span class="field-error" id="err-cns"></span>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="f-nascimento">Data de Nascimento *</label>
+                            <input type="date" class="form-input" id="f-nascimento" name="nascimento" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="f-telefone">Telefone *</label>
+                            <input type="tel" class="form-input" id="f-telefone" name="telefone" placeholder="(00) 00000-0000" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="f-procedimento">Procedimento *</label>
+                            <input type="text" class="form-input" id="f-procedimento" name="procedimento" placeholder="Ex: Colecistectomia laparoscópica" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="f-especialidade">Especialidade *</label>
+                            <select class="form-select" id="f-especialidade" name="especialidade" required>
+                                <option value="">Selecione...</option>
+                                <option>Cirurgia Geral</option>
+                                <option>Ortopedia</option>
+                                <option>Ginecologia</option>
+                                <option>Urologia</option>
+                                <option>Neurocirurgia</option>
+                                <option>Cardiologia</option>
+                                <option>Oftalmologia</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="f-lateralidade">Lateralidade</label>
+                            <select class="form-select" id="f-lateralidade" name="lateralidade">
+                                <option>Não se aplica</option>
+                                <option>Direito</option>
+                                <option>Esquerdo</option>
+                                <option>Bilateral</option>
+                            </select>
+                            <span class="field-error" id="err-lateralidade"></span>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="f-cirurgiao">Cirurgião Responsável *</label>
+                            <select class="form-select" id="f-cirurgiao" name="cirurgiao" required>
+                                <option value="">Selecione...</option>
+                                <option>Dr. Carlos Mendes</option>
+                                <option>Dra. Fernanda Lima</option>
+                                <option>Dr. Roberto Silva</option>
+                                <option>Dra. Ana Paula Costa</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="f-data-prevista">Data Prevista *</label>
+                            <input type="date" class="form-input" id="f-data-prevista" name="data_prevista" required>
+                            <span class="field-error" id="err-data-prevista"></span>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="f-prioridade">Prioridade</label>
+                            <select class="form-select" id="f-prioridade" name="prioridade">
+                                <option>Eletiva</option>
+                                <option>Urgente</option>
+                                <option>Emergência</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group" style="margin-top: 16px;">
+                        <label class="form-label" for="f-observacoes">Observações / Necessidades Especiais</label>
+                        <textarea class="form-textarea" id="f-observacoes" name="observacoes" placeholder="Ex: necessita prótese, avaliação cardiológica, reserva de sangue..."></textarea>
+                    </div>
+                    <div style="margin-top: 20px; display: flex; gap: 10px;">
+                        <button type="submit" class="btn btn-primary">💾 Salvar Solicitação</button>
+                        <button type="button" class="btn btn-secondary" onclick="limparFormulario()">Cancelar</button>
+                    </div>
+                </form>
+                <div id="msg-sucesso" class="success-msg">
+                    ✅ Solicitação cadastrada com sucesso! A jornada foi criada e as pendências foram distribuídas aos setores responsáveis.
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB: FLUXO -->
+        <div id="panel-fluxo" class="panel">
+            <div class="card">
+                <div class="card-title">🔄 Fluxo da Jornada Cirúrgica</div>
+                <div id="fluxo-visual"></div>
+            </div>
+        </div>
+
+    </div>
+
+<script>
+// ============================================================
+// DADOS DE EXEMPLO
+// ============================================================
+let pacientes = [
+    {
+        id: 1, nome: "Maria da Silva", cns: "123456789012345", procedimento: "Colecistectomia laparoscópica",
+        especialidade: "Cirurgia Geral", lateralidade: "N/A", cirurgiao: "Dr. Carlos Mendes",
+        data: "2026-08-18", prioridade: "Eletiva",
+        pendencias: [
+            { tipo: "exame", desc: "Hemograma vencido", responsavel: "Ambulatório", prazo: "2026-08-15" },
+            { tipo: "avaliacao", desc: "Avaliação anestésica pendente", responsavel: "Anestesia", prazo: "2026-08-16" }
+        ],
+        concluidos: ["Solicitação cadastrada", "AIH autorizada", "Consulta cirúrgica", "Material confirmado"],
+        comunicacoes: { confirmado: false, mensagensEnviadas: 2 }
+    },
+    {
+        id: 2, nome: "João Pereira", cns: "987654321098765", procedimento: "Artroplastia de joelho",
+        especialidade: "Ortopedia", lateralidade: "Esquerdo", cirurgiao: "Dra. Fernanda Lima",
+        data: "2026-07-25", prioridade: "Eletiva",
+        pendencias: [
+            { tipo: "material", desc: "Prótese não confirmada", responsavel: "OPME", prazo: "2026-07-23" },
+            { tipo: "leito", desc: "UTI não reservada", responsavel: "Internação", prazo: "2026-07-24" }
+        ],
+        concluidos: ["Solicitação cadastrada", "AIH autorizada", "Avaliação anestésica", "Exames atualizados"],
+        comunicacoes: { confirmado: true, mensagensEnviadas: 4 }
+    },
+    {
+        id: 3, nome: "Ana Beatriz Souza", cns: "456789123456789", procedimento: "Histerectomia",
+        especialidade: "Ginecologia", lateralidade: "N/A", cirurgiao: "Dra. Ana Paula Costa",
+        data: "2026-08-05", prioridade: "Eletiva",
+        pendencias: [],
+        concluidos: ["Solicitação cadastrada", "AIH autorizada", "Consulta cirúrgica", "Exames atualizados", "Avaliação anestésica", "Material confirmado", "Paciente confirmou presença"],
+        comunicacoes: { confirmado: true, mensagensEnviadas: 5 }
+    },
+    {
+        id: 4, nome: "Roberto Almeida", cns: "789123456789123", procedimento: "Cirurgia de catarata",
+        especialidade: "Oftalmologia", lateralidade: "Direito", cirurgiao: "Dr. Roberto Silva",
+        data: "2026-07-30", prioridade: "Eletiva",
+        pendencias: [
+            { tipo: "contato", desc: "Paciente não confirmou presença", responsavel: "Central Cirúrgica", prazo: "2026-07-28" }
+        ],
+        concluidos: ["Solicitação cadastrada", "AIH autorizada", "Exames atualizados", "Avaliação anestésica", "Material confirmado"],
+        comunicacoes: { confirmado: false, mensagensEnviadas: 3 }
+    },
+    {
+        id: 5, nome: "Luciana Ferreira", cns: "321654987321654", procedimento: "Herniorrafia inguinal",
+        especialidade: "Cirurgia Geral", lateralidade: "Direito", cirurgiao: "Dr. Carlos Mendes",
+        data: "2026-08-22", prioridade: "Eletiva",
+        pendencias: [],
+        concluidos: ["Solicitação cadastrada", "AIH autorizada", "Consulta cirúrgica", "Exames atualizados", "Avaliação anestésica", "Material confirmado", "Paciente confirmou presença"],
+        comunicacoes: { confirmado: true, mensagensEnviadas: 4 }
+    }
+];
+
+let nextId = 6;
+
+// ============================================================
+// UTILITÁRIOS
+// ============================================================
+function escapeHtml(str) {
+    if (str === null || str === undefined) return "";
+    return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+}
+
+function formatarData(data) {
+    if (!data) return "";
+    const [ano, mes, dia] = data.split("-");
+    return `${dia}/${mes}/${ano}`;
+}
+
+function hojeISO() {
+    const hoje = new Date();
+    hoje.setHours(0,0,0,0);
+    return hoje.toISOString().split("T")[0];
+}
+
+function calcularDiasAte(dataStr) {
+    const hoje = new Date();
+    hoje.setHours(0,0,0,0);
+    const data = new Date(dataStr + "T00:00:00");
+    const diff = Math.ceil((data - hoje) / (1000 * 60 * 60 * 24));
+    return diff;
+}
+
+// Status é sempre derivado das pendências reais do paciente, nunca armazenado
+// separadamente — evita a tela mostrar um status que não bate com os dados.
+function calcularStatusPaciente(p) {
+    if (!p.pendencias || p.pendencias.length === 0) return "pronto";
+    const temPendenciaCritica = p.pendencias.some(pend => calcularDiasAte(pend.prazo) <= 1);
+    if (temPendenciaCritica) return "risco";
+    return "atencao";
+}
+
+function severidadePendencia(pend) {
+    const dias = calcularDiasAte(pend.prazo);
+    if (dias <= 1) return "red";
+    if (dias <= 3) return "yellow";
+    return "green";
+}
+
+// ============================================================
+// CÁLCULOS AGREGADOS (fonte única de verdade para KPIs, alertas e resumo)
+// ============================================================
+function calcularAgregados() {
+    const total = pacientes.length;
+    const contagemStatus = { pronto: 0, atencao: 0, risco: 0 };
+    let totalPendencias = 0;
+    const porSetor = {};
+
+    pacientes.forEach(p => {
+        const status = calcularStatusPaciente(p);
+        contagemStatus[status]++;
+        p.pendencias.forEach(pend => {
+            totalPendencias++;
+            const sev = severidadePendencia(pend);
+            if (!porSetor[pend.responsavel]) porSetor[pend.responsavel] = { green: 0, yellow: 0, red: 0 };
+            porSetor[pend.responsavel][sev]++;
+        });
+    });
+
+    return { total, contagemStatus, totalPendencias, porSetor };
+}
+
+// ============================================================
+// RENDERIZAÇÃO
+// ============================================================
+function renderKPIs(agregados) {
+    const { total, contagemStatus, totalPendencias } = agregados;
+    const cards = [
+        { classe: "success", label: "Cirurgias Cadastradas", valor: total },
+        { classe: "info", label: "Prontas", valor: contagemStatus.pronto },
+        { classe: "warning", label: "Pendências Ativas", valor: totalPendencias },
+        { classe: "danger", label: "Risco de Suspensão", valor: contagemStatus.risco }
+    ];
+    document.getElementById("kpi-grid").innerHTML = cards.map(c => `
+        <div class="kpi-card ${c.classe}">
+            <div class="kpi-label">${c.label}</div>
+            <div class="kpi-value">${c.valor}</div>
+        </div>
+    `).join("");
+}
+
+function renderAlertasSetor(agregados) {
+    const container = document.getElementById("alertas-setor");
+    const setores = Object.keys(agregados.porSetor);
+    if (setores.length === 0) {
+        container.innerHTML = `<div class="empty-state">Nenhuma pendência em aberto no momento</div>`;
+        return;
+    }
+    const icones = {
+        "Secretaria": "📋", "Anestesia": "💉", "Centro Cirúrgico": "🔬",
+        "Internação": "🛏️", "OPME": "🦴", "Regulação": "📄",
+        "Ambulatório": "🩺", "Central Cirúrgica": "☎️"
+    };
+    container.innerHTML = setores.map(setor => {
+        const s = agregados.porSetor[setor];
+        return `
+        <div class="alert-item">
+            <div class="alert-info">
+                <span class="alert-icon">${icones[setor] || "📌"}</span>
+                <span class="alert-name">${escapeHtml(setor)}</span>
+            </div>
+            <div class="badge-group">
+                <span class="badge badge-green">${s.green}</span>
+                <span class="badge badge-yellow">${s.yellow}</span>
+                <span class="badge badge-red">${s.red}</span>
+            </div>
+        </div>
+    `;
+    }).join("");
+}
+
+function renderStatusCirurgias(agregados) {
+    const container = document.getElementById("status-cirurgias");
+    const { total, contagemStatus } = agregados;
+    if (total === 0) {
+        container.innerHTML = `<div class="empty-state">Nenhuma cirurgia cadastrada</div>`;
+        return;
+    }
+    const dados = [
+        { label: "🟢 Prontas", valor: contagemStatus.pronto, cor: "#059669" },
+        { label: "🟡 Atenção", valor: contagemStatus.atencao, cor: "#d97706" },
+        { label: "🔴 Risco de Suspensão", valor: contagemStatus.risco, cor: "#dc2626" }
+    ];
+    container.innerHTML = dados.map(d => `
+        <div class="progress-item">
+            <div class="progress-header">
+                <span class="progress-label">${d.label}</span>
+                <span class="progress-value" style="color:${d.cor}">${d.valor}</span>
+            </div>
+            <div class="progress-bar-bg">
+                <div class="progress-bar-fill" style="background:${d.cor}; width:${(d.valor/total*100)}%"></div>
+            </div>
+        </div>
+    `).join("");
+}
+
+function renderResumoIA(agregados) {
+    const container = document.getElementById("ia-summary");
+    const setores = Object.keys(agregados.porSetor);
+    if (setores.length === 0) {
+        container.innerHTML = `<span class="ia-empty">Nenhuma pendência em aberto — todas as cirurgias cadastradas estão prontas.</span>`;
+        return;
+    }
+    const linhas = setores.map(setor => {
+        const s = agregados.porSetor[setor];
+        const totalSetor = s.green + s.yellow + s.red;
+        const partes = [];
+        if (s.red > 0) partes.push(`${s.red} crítica(s) (prazo em até 1 dia)`);
+        if (s.yellow > 0) partes.push(`${s.yellow} de atenção (prazo em até 3 dias)`);
+        if (s.green > 0) partes.push(`${s.green} sem urgência`);
+        return `<strong>${escapeHtml(setor)}:</strong> ${totalSetor} pendência(s) — ${partes.join(", ")}.`;
+    });
+    container.innerHTML = linhas.join("<br><br>");
+}
+
+function atualizarDashboard() {
+    const agregados = calcularAgregados();
+    renderKPIs(agregados);
+    renderAlertasSetor(agregados);
+    renderStatusCirurgias(agregados);
+    renderResumoIA(agregados);
+}
+
+function renderPacientes(lista = pacientes) {
+    const container = document.getElementById("lista-pacientes");
+    if (lista.length === 0) {
+        container.innerHTML = `<div class="empty-state">Nenhum paciente encontrado</div>`;
+        return;
+    }
+    container.innerHTML = lista.map(p => {
+        const diasAte = calcularDiasAte(p.data);
+        const diasLabel = diasAte < 0 ? `(${Math.abs(diasAte)}d atrás)` : diasAte === 0 ? "(hoje)" : `(${diasAte}d)`;
+        const statusConfig = {
+            pronto: { classe: "status-pronto", label: "Pronto", emoji: "🟢" },
+            atencao: { classe: "status-atencao", label: "Atenção", emoji: "🟡" },
+            risco: { classe: "status-risco", label: "Risco", emoji: "🔴" }
+        };
+        const status = calcularStatusPaciente(p);
+        const s = statusConfig[status];
+        return `
+            <div class="patient-card">
+                <div class="patient-header" onclick="toggleDetalhe(${p.id})">
+                    <div class="patient-info">
+                        <div class="patient-name-row">
+                            <span class="patient-name">${escapeHtml(p.nome)}</span>
+                            <span class="status-badge ${s.classe}">${s.emoji} ${s.label}</span>
+                        </div>
+                        <div class="patient-meta">
+                            CNS: ${escapeHtml(p.cns)} · ${escapeHtml(p.procedimento)} · ${escapeHtml(p.especialidade)}<br>
+                            Cirurgião: ${escapeHtml(p.cirurgiao)} · Data: ${formatarData(p.data)} ${diasLabel} · Prioridade: ${escapeHtml(p.prioridade)}
+                        </div>
+                    </div>
+                    <div class="patient-header-actions">
+                        <button type="button" class="icon-btn" title="Excluir paciente" onclick="event.stopPropagation(); excluirPaciente(${p.id})">🗑️</button>
+                        <button type="button" class="patient-arrow" id="arrow-${p.id}">▼</button>
+                    </div>
+                </div>
+                <div class="patient-detail" id="detalhe-${p.id}">
+                    ${p.pendencias.length > 0 ? `
+                        <div class="detail-section">
+                            <div class="detail-title danger">⚠️ Pendências Ativas</div>
+                            ${p.pendencias.map((pend, idx) => `
+                                <div class="pendencia-box">
+                                    <div>
+                                        <div class="pendencia-text">${escapeHtml(pend.desc)}</div>
+                                        <div class="pendencia-meta">Responsável: ${escapeHtml(pend.responsavel)} · Prazo: ${formatarData(pend.prazo)}</div>
+                                    </div>
+                                    <div class="pendencia-actions">
+                                        <span class="pendencia-status">PENDENTE</span>
+                                        <button type="button" class="btn-resolver" onclick="resolverPendencia(${p.id}, ${idx})">✓ Resolver</button>
+                                    </div>
+                                </div>
+                            `).join("")}
+                        </div>
+                    ` : `
+                        <div class="detail-section">
+                            <div style="background:#f0fdf4; border:1px solid #bbf7d0; padding:10px 14px; border-radius:6px; color:#166534; font-size:12px; font-weight:500;">
+                                ✅ Nenhuma pendência ativa
+                            </div>
+                        </div>
+                    `}
+                    <div class="detail-section">
+                        <div class="detail-title success">✅ Etapas Concluídas</div>
+                        <div class="concluido-box">
+                            ${p.concluidos.map(c => `<span class="concluido-tag">✓ ${escapeHtml(c)}</span>`).join("")}
+                        </div>
+                    </div>
+                    <div class="detail-section">
+                        <div class="detail-title info">📱 Comunicação com Paciente</div>
+                        <div class="comunicacao-box">
+                            <div class="comunicacao-text">
+                                Status: ${p.comunicacoes.confirmado
+                                    ? '<span style="color:#059669; font-weight:600;">✅ Presença confirmada</span>'
+                                    : '<span style="color:#d97706; font-weight:600;">⏳ Aguardando confirmação</span>'}<br>
+                                Mensagens enviadas: ${p.comunicacoes.mensagensEnviadas}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }).join("");
+}
+
+function toggleDetalhe(id) {
+    const el = document.getElementById(`detalhe-${id}`);
+    const arrow = document.getElementById(`arrow-${id}`);
+    el.classList.toggle("open");
+    arrow.classList.toggle("rotated");
+}
+
+function resolverPendencia(id, idx) {
+    const paciente = pacientes.find(p => p.id === id);
+    if (!paciente) return;
+    const pend = paciente.pendencias[idx];
+    if (!pend) return;
+    paciente.pendencias.splice(idx, 1);
+    paciente.concluidos.push(pend.desc);
+    filtrarPacientes();
+    atualizarDashboard();
+}
+
+function excluirPaciente(id) {
+    const paciente = pacientes.find(p => p.id === id);
+    if (!paciente) return;
+    if (!confirm(`Remover "${paciente.nome}" da lista de jornadas cirúrgicas?`)) return;
+    pacientes = pacientes.filter(p => p.id !== id);
+    filtrarPacientes();
+    atualizarDashboard();
+}
+
+function renderFluxo() {
+    const container = document.getElementById("fluxo-visual");
+    const etapas = [
+        { nome: "Solicitação Cirúrgica", desc: "Formulário digital preenchido pelo cirurgião ou secretaria", ator: "Cirurgião / Secretaria", icone: "📝" },
+        { nome: "Cadastro Único", desc: "Criação da jornada do paciente no sistema", ator: "Sistema", icone: "👤" },
+        { nome: "Conferência de Campos", desc: "Validação automática dos campos obrigatórios", ator: "Motor de Regras", icone: "✅" },
+        { nome: "Distribuição de Pendências", desc: "Tarefas enviadas aos setores responsáveis", ator: "Sistema", icone: "📤" },
+        { nome: "Contato com Paciente", desc: "Mensagens automáticas de confirmação e orientação", ator: "Assistente de IA", icone: "📱" },
+        { nome: "Avaliação Pré-Operatória", desc: "Avaliação clínica e anestésica do paciente", ator: "Anestesia / Ambulatório", icone: "💉" },
+        { nome: "Conferência Final", desc: "Verificação de exames, materiais e documentos", ator: "Todos os setores", icone: "🔍" },
+        { nome: "Confirmação 72h e 24h", desc: "Alertas automáticos antes da cirurgia", ator: "Assistente de IA", icone: "⏰" },
+        { nome: "Liberação Humana", desc: "Aprovação final por profissionais autorizados", ator: "Coordenação Cirúrgica", icone: "🔓" },
+        { nome: "Cirurgia Realizada", desc: "Registro do resultado e encerramento da jornada", ator: "Centro Cirúrgico", icone: "🔬" }
+    ];
+
+    container.innerHTML = etapas.map((e, i) => `
+        <div class="flow-step">
+            <div class="flow-connector">
+                <div class="flow-icon">${e.icone}</div>
+                ${i < etapas.length - 1 ? '<div class="flow-line"></div>' : ''}
+            </div>
+            <div class="flow-content">
+                <div class="flow-title">${i+1}. ${e.nome}</div>
+                <div class="flow-desc">${e.desc}</div>
+                <div class="flow-actor">👤 ${e.ator}</div>
+            </div>
+        </div>
+    `).join("");
+}
+
+// ============================================================
+// FILTROS
+// ============================================================
+function filtrarPacientes() {
+    const search = document.getElementById("search-paciente").value.toLowerCase();
+    const statusFilter = document.getElementById("filter-status").value;
+    const espFilter = document.getElementById("filter-especialidade").value;
+
+    const filtrados = pacientes.filter(p => {
+        const matchSearch = !search ||
+            p.nome.toLowerCase().includes(search) ||
+            p.cns.includes(search) ||
+            p.procedimento.toLowerCase().includes(search);
+        const matchStatus = !statusFilter || calcularStatusPaciente(p) === statusFilter;
+        const matchEsp = !espFilter || p.especialidade === espFilter;
+        return matchSearch && matchStatus && matchEsp;
+    });
+
+    renderPacientes(filtrados);
+}
+
+// ============================================================
+// TABS
+// ============================================================
+function showTab(tab, btnEl) {
+    document.querySelectorAll(".panel").forEach(p => p.classList.remove("active"));
+    document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+    document.getElementById(`panel-${tab}`).classList.add("active");
+    if (btnEl) btnEl.classList.add("active");
+}
+
+// ============================================================
+// FORMULÁRIO
+// ============================================================
+function limparErrosForm() {
+    document.querySelectorAll(".field-error").forEach(el => { el.classList.remove("show"); el.textContent = ""; });
+    document.querySelectorAll(".form-input, .form-select").forEach(el => el.classList.remove("invalid"));
+}
+
+function mostrarErro(campoId, erroId, msg) {
+    document.getElementById(campoId).classList.add("invalid");
+    const erroEl = document.getElementById(erroId);
+    erroEl.textContent = msg;
+    erroEl.classList.add("show");
+}
+
+function salvarSolicitacao(event) {
+    event.preventDefault();
+    limparErrosForm();
+    const form = event.target;
+    const formData = new FormData(form);
+
+    let valido = true;
+
+    const cns = (formData.get("cns") || "").trim();
+    if (!/^\d{15}$/.test(cns)) {
+        mostrarErro("f-cns", "err-cns", "O CNS deve ter exatamente 15 dígitos numéricos.");
+        valido = false;
+    } else if (pacientes.some(p => p.cns === cns)) {
+        mostrarErro("f-cns", "err-cns", "Já existe um paciente cadastrado com este CNS.");
+        valido = false;
+    }
+
+    const especialidade = formData.get("especialidade");
+    const lateralidade = formData.get("lateralidade");
+    if (especialidade === "Ortopedia" && lateralidade === "Não se aplica") {
+        mostrarErro("f-lateralidade", "err-lateralidade", "Para procedimentos ortopédicos, a lateralidade é obrigatória.");
+        valido = false;
+    }
+
+    const dataPrevista = formData.get("data_prevista");
+    if (dataPrevista && dataPrevista < hojeISO()) {
+        mostrarErro("f-data-prevista", "err-data-prevista", "A data prevista não pode estar no passado.");
+        valido = false;
+    }
+
+    if (!valido) return false;
+
+    // Cria novo paciente
+    const novoPaciente = {
+        id: nextId++,
+        nome: formData.get("nome").trim(),
+        cns: cns,
+        procedimento: formData.get("procedimento").trim(),
+        especialidade: especialidade,
+        lateralidade: lateralidade,
+        cirurgiao: formData.get("cirurgiao"),
+        data: dataPrevista,
+        prioridade: formData.get("prioridade"),
+        pendencias: gerarPendenciasIniciais(especialidade, formData.get("observacoes")),
+        concluidos: ["Solicitação cadastrada"],
+        comunicacoes: { confirmado: false, mensagensEnviadas: 1 }
+    };
+
+    pacientes.unshift(novoPaciente);
+
+    // Mostra mensagem de sucesso
+    const msg = document.getElementById("msg-sucesso");
+    msg.classList.add("show");
+    setTimeout(() => msg.classList.remove("show"), 6000);
+
+    // Limpa formulário
+    form.reset();
+    limparErrosForm();
+
+    // Atualiza lista e painel geral
+    filtrarPacientes();
+    atualizarDashboard();
+
+    return false;
+}
+
+function gerarPendenciasIniciais(especialidade, observacoes) {
+    const pends = [];
+    pends.push({ tipo: "regulacao", desc: "AIH pendente de autorização", responsavel: "Regulação", prazo: calcularPrazo(3) });
+    pends.push({ tipo: "avaliacao", desc: "Avaliação anestésica pendente", responsavel: "Anestesia", prazo: calcularPrazo(7) });
+    pends.push({ tipo: "exame", desc: "Exames pré-operatórios pendentes", responsavel: "Ambulatório", prazo: calcularPrazo(5) });
+
+    const obsLower = (observacoes || "").toLowerCase();
+    if (obsLower.includes("prótese") || obsLower.includes("protese")) {
+        pends.push({ tipo: "material", desc: "Prótese não confirmada", responsavel: "OPME", prazo: calcularPrazo(10) });
+    }
+    if (obsLower.includes("uti")) {
+        pends.push({ tipo: "leito", desc: "Reserva de UTI pendente", responsavel: "Internação", prazo: calcularPrazo(7) });
+    }
+    if (especialidade === "Ortopedia") {
+        pends.push({ tipo: "material", desc: "Material ortopédico a confirmar", responsavel: "OPME", prazo: calcularPrazo(10) });
+    }
+
+    return pends;
+}
+
+function calcularPrazo(dias) {
+    const data = new Date();
+    data.setDate(data.getDate() + dias);
+    return data.toISOString().split("T")[0];
+}
+
+function limparFormulario() {
+    document.getElementById("form-solicitacao").reset();
+    document.getElementById("msg-sucesso").classList.remove("show");
+    limparErrosForm();
+}
+
+// ============================================================
+// INICIALIZAÇÃO
+// ============================================================
+document.addEventListener("DOMContentLoaded", () => {
+    document.getElementById("f-data-prevista").min = hojeISO();
+    renderPacientes();
+    renderFluxo();
+    atualizarDashboard();
+});
+</script>
+
+</body>
+</html>
