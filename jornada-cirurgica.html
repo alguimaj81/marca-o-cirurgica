@@ -307,6 +307,22 @@
         }
         .comunicacao-text { font-size: 12px; color: var(--gray-500); }
 
+        /* Timeline (histórico da jornada, inclui eventos gerados por automação) */
+        .timeline-box {
+            background: var(--gray-50);
+            border-radius: 8px;
+            padding: 4px 12px;
+        }
+        .timeline-item {
+            font-size: 12px;
+            color: var(--gray-600);
+            padding: 8px 0;
+            border-bottom: 1px solid var(--gray-200);
+        }
+        .timeline-item:last-child { border-bottom: none; }
+        .timeline-time { font-size: 10px; color: var(--gray-400); display: block; margin-top: 2px; }
+        .timeline-icon { margin-right: 4px; }
+
         /* Form */
         .form-grid {
             display: grid;
@@ -354,6 +370,7 @@
             font-size: 14px;
             transition: all 0.2s;
         }
+        .btn:disabled { opacity: 0.6; cursor: not-allowed; }
         .btn-primary {
             background: var(--primary);
             color: white;
@@ -377,6 +394,18 @@
             font-size: 13px;
         }
         .success-msg.show { display: block; }
+
+        .form-error-banner {
+            display: none;
+            margin-top: 16px;
+            padding: 14px;
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            border-radius: 8px;
+            color: #7f1d1d;
+            font-size: 13px;
+        }
+        .form-error-banner.show { display: block; }
 
         /* Search bar */
         .search-bar {
@@ -457,16 +486,130 @@
             padding: 40px;
             color: var(--gray-400);
         }
+
+        .automacoes-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-top: 14px;
+            flex-wrap: wrap;
+        }
+        .automacoes-resultado {
+            font-size: 12px;
+            color: var(--gray-500);
+        }
+
+        /* Login overlay */
+        .login-overlay {
+            position: fixed;
+            inset: 0;
+            background: var(--gray-900);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+        .login-card {
+            background: white;
+            border-radius: 12px;
+            padding: 32px;
+            width: 100%;
+            max-width: 340px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.35);
+        }
+        .login-card h2 { font-size: 18px; color: var(--gray-800); }
+        .login-card .sub { font-size: 12px; color: var(--gray-500); margin: 4px 0 20px 0; }
+        .login-error {
+            font-size: 12px;
+            color: var(--danger);
+            margin-top: 10px;
+            display: none;
+        }
+        .login-error.show { display: block; }
+        .app-shell { display: none; }
+        .app-shell.ativo { display: block; }
+
+        /* Usuário logado no header */
+        .user-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-top: 14px;
+            padding-top: 14px;
+            border-top: 1px solid rgba(255,255,255,0.2);
+            font-size: 12px;
+        }
+        .user-bar .user-info { opacity: 0.9; }
+        .btn-logout {
+            background: rgba(255,255,255,0.15);
+            color: white;
+            border: 1px solid rgba(255,255,255,0.3);
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            cursor: pointer;
+        }
+        .btn-logout:hover { background: rgba(255,255,255,0.25); }
+
+        /* Auditoria */
+        .audit-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+        .audit-table th {
+            text-align: left;
+            padding: 8px 10px;
+            color: var(--gray-500);
+            font-size: 11px;
+            text-transform: uppercase;
+            border-bottom: 1px solid var(--gray-200);
+        }
+        .audit-table td {
+            padding: 8px 10px;
+            border-bottom: 1px solid var(--gray-100);
+            color: var(--gray-700);
+        }
+        .audit-acao {
+            font-size: 11px;
+            font-weight: 600;
+            padding: 2px 8px;
+            border-radius: 10px;
+            background: var(--gray-100);
+            color: var(--gray-600);
+            white-space: nowrap;
+        }
     </style>
 <base target="_blank">
 </head>
 <body>
-    <div class="container">
+
+    <!-- LOGIN -->
+    <div class="login-overlay" id="login-overlay">
+        <div class="login-card">
+            <h2>🏥 Central Cirúrgica</h2>
+            <div class="sub">Entre com seu usuário para acessar dados de pacientes</div>
+            <form id="form-login" onsubmit="return fazerLogin(event)">
+                <div class="form-group" style="margin-bottom:12px;">
+                    <label class="form-label" for="l-usuario">Usuário</label>
+                    <input type="text" class="form-input" id="l-usuario" required autocomplete="username">
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="l-senha">Senha</label>
+                    <input type="password" class="form-input" id="l-senha" required autocomplete="current-password">
+                </div>
+                <button type="submit" class="btn btn-primary" style="width:100%; margin-top:18px;" id="btn-login">Entrar</button>
+                <div class="login-error" id="login-error"></div>
+            </form>
+        </div>
+    </div>
+
+    <div class="container app-shell" id="app-shell">
 
         <!-- HEADER -->
         <div class="header">
             <h1>🏥 Central Inteligente de Jornada Cirúrgica — SUS</h1>
-            <p>Sistema de automação da jornada cirúrgica com IA assistiva</p>
+            <p>Sistema de automação da jornada cirúrgica com IA assistiva · dados persistidos em banco SQLite</p>
+            <div class="user-bar">
+                <span class="user-info" id="user-info"></span>
+                <button type="button" class="btn-logout" onclick="fazerLogout()">Sair</button>
+            </div>
         </div>
 
         <!-- KPI CARDS (calculados a partir dos pacientes cadastrados) -->
@@ -478,6 +621,7 @@
             <button class="tab-btn" onclick="showTab('pacientes', this)">👤 Pacientes</button>
             <button class="tab-btn" onclick="showTab('solicitacao', this)">📝 Nova Solicitação</button>
             <button class="tab-btn" onclick="showTab('fluxo', this)">🔄 Fluxo da Jornada</button>
+            <button class="tab-btn" onclick="showTab('auditoria', this)">🔒 Auditoria</button>
         </div>
 
         <!-- TAB: DASHBOARD -->
@@ -495,6 +639,10 @@
             <div class="card">
                 <div class="card-title">🤖 Resumo Diário (calculado a partir dos dados atuais)</div>
                 <div class="ia-summary" id="ia-summary"></div>
+                <div class="automacoes-row">
+                    <button type="button" class="btn btn-secondary" id="btn-automacoes" onclick="executarAutomacoes()">⚙️ Executar automações agora</button>
+                    <span class="automacoes-resultado" id="automacoes-resultado">As automações também rodam sozinhas todo dia às 08:00 (alertas de pendência crítica e mensagens de confirmação 72h/24h).</span>
+                </div>
             </div>
         </div>
 
@@ -598,13 +746,14 @@
                         <textarea class="form-textarea" id="f-observacoes" name="observacoes" placeholder="Ex: necessita prótese, avaliação cardiológica, reserva de sangue..."></textarea>
                     </div>
                     <div style="margin-top: 20px; display: flex; gap: 10px;">
-                        <button type="submit" class="btn btn-primary">💾 Salvar Solicitação</button>
+                        <button type="submit" class="btn btn-primary" id="btn-salvar-solicitacao">💾 Salvar Solicitação</button>
                         <button type="button" class="btn btn-secondary" onclick="limparFormulario()">Cancelar</button>
                     </div>
                 </form>
                 <div id="msg-sucesso" class="success-msg">
                     ✅ Solicitação cadastrada com sucesso! A jornada foi criada e as pendências foram distribuídas aos setores responsáveis.
                 </div>
+                <div id="msg-erro-geral" class="form-error-banner"></div>
             </div>
         </div>
 
@@ -616,64 +765,28 @@
             </div>
         </div>
 
+        <!-- TAB: AUDITORIA -->
+        <div id="panel-auditoria" class="panel">
+            <div class="card">
+                <div class="card-title">🔒 Log de Auditoria (acesso e alterações em dados de pacientes)</div>
+                <div style="overflow-x:auto;">
+                    <table class="audit-table">
+                        <thead>
+                            <tr><th>Quando</th><th>Usuário</th><th>Ação</th><th>Paciente</th><th>Detalhes</th></tr>
+                        </thead>
+                        <tbody id="audit-body"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
     </div>
 
 <script>
-// ============================================================
-// DADOS DE EXEMPLO
-// ============================================================
-let pacientes = [
-    {
-        id: 1, nome: "Maria da Silva", cns: "123456789012345", procedimento: "Colecistectomia laparoscópica",
-        especialidade: "Cirurgia Geral", lateralidade: "N/A", cirurgiao: "Dr. Carlos Mendes",
-        data: "2026-08-18", prioridade: "Eletiva",
-        pendencias: [
-            { tipo: "exame", desc: "Hemograma vencido", responsavel: "Ambulatório", prazo: "2026-08-15" },
-            { tipo: "avaliacao", desc: "Avaliação anestésica pendente", responsavel: "Anestesia", prazo: "2026-08-16" }
-        ],
-        concluidos: ["Solicitação cadastrada", "AIH autorizada", "Consulta cirúrgica", "Material confirmado"],
-        comunicacoes: { confirmado: false, mensagensEnviadas: 2 }
-    },
-    {
-        id: 2, nome: "João Pereira", cns: "987654321098765", procedimento: "Artroplastia de joelho",
-        especialidade: "Ortopedia", lateralidade: "Esquerdo", cirurgiao: "Dra. Fernanda Lima",
-        data: "2026-07-25", prioridade: "Eletiva",
-        pendencias: [
-            { tipo: "material", desc: "Prótese não confirmada", responsavel: "OPME", prazo: "2026-07-23" },
-            { tipo: "leito", desc: "UTI não reservada", responsavel: "Internação", prazo: "2026-07-24" }
-        ],
-        concluidos: ["Solicitação cadastrada", "AIH autorizada", "Avaliação anestésica", "Exames atualizados"],
-        comunicacoes: { confirmado: true, mensagensEnviadas: 4 }
-    },
-    {
-        id: 3, nome: "Ana Beatriz Souza", cns: "456789123456789", procedimento: "Histerectomia",
-        especialidade: "Ginecologia", lateralidade: "N/A", cirurgiao: "Dra. Ana Paula Costa",
-        data: "2026-08-05", prioridade: "Eletiva",
-        pendencias: [],
-        concluidos: ["Solicitação cadastrada", "AIH autorizada", "Consulta cirúrgica", "Exames atualizados", "Avaliação anestésica", "Material confirmado", "Paciente confirmou presença"],
-        comunicacoes: { confirmado: true, mensagensEnviadas: 5 }
-    },
-    {
-        id: 4, nome: "Roberto Almeida", cns: "789123456789123", procedimento: "Cirurgia de catarata",
-        especialidade: "Oftalmologia", lateralidade: "Direito", cirurgiao: "Dr. Roberto Silva",
-        data: "2026-07-30", prioridade: "Eletiva",
-        pendencias: [
-            { tipo: "contato", desc: "Paciente não confirmou presença", responsavel: "Central Cirúrgica", prazo: "2026-07-28" }
-        ],
-        concluidos: ["Solicitação cadastrada", "AIH autorizada", "Exames atualizados", "Avaliação anestésica", "Material confirmado"],
-        comunicacoes: { confirmado: false, mensagensEnviadas: 3 }
-    },
-    {
-        id: 5, nome: "Luciana Ferreira", cns: "321654987321654", procedimento: "Herniorrafia inguinal",
-        especialidade: "Cirurgia Geral", lateralidade: "Direito", cirurgiao: "Dr. Carlos Mendes",
-        data: "2026-08-22", prioridade: "Eletiva",
-        pendencias: [],
-        concluidos: ["Solicitação cadastrada", "AIH autorizada", "Consulta cirúrgica", "Exames atualizados", "Avaliação anestésica", "Material confirmado", "Paciente confirmou presença"],
-        comunicacoes: { confirmado: true, mensagensEnviadas: 4 }
-    }
-];
+const API_BASE = "/api";
 
-let nextId = 6;
+let pacientes = [];
+let usuarioAtual = null;
 
 // ============================================================
 // UTILITÁRIOS
@@ -694,6 +807,14 @@ function formatarData(data) {
     return `${dia}/${mes}/${ano}`;
 }
 
+function formatarDataHora(iso) {
+    if (!iso) return "";
+    // eventos.criado_em vem como "YYYY-MM-DD HH:MM:SS" (UTC, do SQLite)
+    const [dataParte, horaParte] = iso.split(" ");
+    const [ano, mes, dia] = dataParte.split("-");
+    return `${dia}/${mes}/${ano} ${horaParte ? horaParte.slice(0, 5) : ""}`;
+}
+
 function hojeISO() {
     const hoje = new Date();
     hoje.setHours(0,0,0,0);
@@ -708,20 +829,115 @@ function calcularDiasAte(dataStr) {
     return diff;
 }
 
-// Status é sempre derivado das pendências reais do paciente, nunca armazenado
-// separadamente — evita a tela mostrar um status que não bate com os dados.
-function calcularStatusPaciente(p) {
-    if (!p.pendencias || p.pendencias.length === 0) return "pronto";
-    const temPendenciaCritica = p.pendencias.some(pend => calcularDiasAte(pend.prazo) <= 1);
-    if (temPendenciaCritica) return "risco";
-    return "atencao";
-}
-
 function severidadePendencia(pend) {
     const dias = calcularDiasAte(pend.prazo);
     if (dias <= 1) return "red";
     if (dias <= 3) return "yellow";
     return "green";
+}
+
+const EVENTO_ICONE = {
+    etapa: "✅",
+    sistema: "⚙️",
+    alerta: "⚠️",
+    mensagem_simulada: "📱"
+};
+
+// ============================================================
+// API
+// ============================================================
+async function apiGet(caminho) {
+    const resp = await fetch(`${API_BASE}${caminho}`);
+    if (resp.status === 401) { mostrarLogin(); throw new Error("Sessão expirada"); }
+    if (!resp.ok) throw new Error(`Erro ao buscar ${caminho}`);
+    return resp.json();
+}
+
+async function apiJson(caminho, metodo, corpo) {
+    const resp = await fetch(`${API_BASE}${caminho}`, {
+        method: metodo,
+        headers: corpo ? { "Content-Type": "application/json" } : undefined,
+        body: corpo ? JSON.stringify(corpo) : undefined
+    });
+    if (resp.status === 401) { mostrarLogin(); throw new Error("Sessão expirada"); }
+    let dados = null;
+    try { dados = await resp.json(); } catch (e) { /* sem corpo, ex: DELETE 204 */ }
+    if (!resp.ok) {
+        const erro = new Error("Falha na requisição");
+        erro.dados = dados;
+        erro.status = resp.status;
+        throw erro;
+    }
+    return dados;
+}
+
+// ============================================================
+// SESSÃO / LOGIN
+// ============================================================
+function mostrarLogin() {
+    usuarioAtual = null;
+    document.getElementById("app-shell").classList.remove("ativo");
+    document.getElementById("login-overlay").style.display = "flex";
+}
+
+function mostrarApp() {
+    document.getElementById("login-overlay").style.display = "none";
+    document.getElementById("app-shell").classList.add("ativo");
+    document.getElementById("user-info").textContent =
+        `👤 ${usuarioAtual.nome} · ${usuarioAtual.setor}`;
+}
+
+async function verificarSessao() {
+    try {
+        const resp = await fetch(`${API_BASE}/me`);
+        if (!resp.ok) return false;
+        usuarioAtual = await resp.json();
+        return true;
+    } catch (e) {
+        return false;
+    }
+}
+
+async function fazerLogin(event) {
+    event.preventDefault();
+    const usuario = document.getElementById("l-usuario").value.trim();
+    const senha = document.getElementById("l-senha").value;
+    const btn = document.getElementById("btn-login");
+    const erroEl = document.getElementById("login-error");
+    erroEl.classList.remove("show");
+    btn.disabled = true;
+    try {
+        const resp = await fetch(`${API_BASE}/login`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ usuario, senha })
+        });
+        const dados = await resp.json();
+        if (!resp.ok) {
+            erroEl.textContent = dados.erro || "Não foi possível entrar.";
+            erroEl.classList.add("show");
+            return false;
+        }
+        usuarioAtual = dados;
+        mostrarApp();
+        await inicializarApp();
+    } catch (e) {
+        erroEl.textContent = "Não foi possível contactar o servidor.";
+        erroEl.classList.add("show");
+    } finally {
+        btn.disabled = false;
+    }
+    return false;
+}
+
+async function fazerLogout() {
+    try { await fetch(`${API_BASE}/logout`, { method: "POST" }); } catch (e) { /* ignora */ }
+    document.getElementById("form-login").reset();
+    mostrarLogin();
+}
+
+async function carregarPacientes() {
+    pacientes = await apiGet("/pacientes");
 }
 
 // ============================================================
@@ -734,8 +950,7 @@ function calcularAgregados() {
     const porSetor = {};
 
     pacientes.forEach(p => {
-        const status = calcularStatusPaciente(p);
-        contagemStatus[status]++;
+        contagemStatus[p.status]++;
         p.pendencias.forEach(pend => {
             totalPendencias++;
             const sev = severidadePendencia(pend);
@@ -862,8 +1077,7 @@ function renderPacientes(lista = pacientes) {
             atencao: { classe: "status-atencao", label: "Atenção", emoji: "🟡" },
             risco: { classe: "status-risco", label: "Risco", emoji: "🔴" }
         };
-        const status = calcularStatusPaciente(p);
-        const s = statusConfig[status];
+        const s = statusConfig[p.status];
         return `
             <div class="patient-card">
                 <div class="patient-header" onclick="toggleDetalhe(${p.id})">
@@ -886,15 +1100,15 @@ function renderPacientes(lista = pacientes) {
                     ${p.pendencias.length > 0 ? `
                         <div class="detail-section">
                             <div class="detail-title danger">⚠️ Pendências Ativas</div>
-                            ${p.pendencias.map((pend, idx) => `
+                            ${p.pendencias.map((pend) => `
                                 <div class="pendencia-box">
                                     <div>
-                                        <div class="pendencia-text">${escapeHtml(pend.desc)}</div>
+                                        <div class="pendencia-text">${escapeHtml(pend.descricao)}</div>
                                         <div class="pendencia-meta">Responsável: ${escapeHtml(pend.responsavel)} · Prazo: ${formatarData(pend.prazo)}</div>
                                     </div>
                                     <div class="pendencia-actions">
                                         <span class="pendencia-status">PENDENTE</span>
-                                        <button type="button" class="btn-resolver" onclick="resolverPendencia(${p.id}, ${idx})">✓ Resolver</button>
+                                        <button type="button" class="btn-resolver" onclick="resolverPendencia(${p.id}, ${pend.id})">✓ Resolver</button>
                                     </div>
                                 </div>
                             `).join("")}
@@ -923,6 +1137,17 @@ function renderPacientes(lista = pacientes) {
                             </div>
                         </div>
                     </div>
+                    <div class="detail-section">
+                        <div class="detail-title info">🕓 Histórico da Jornada (inclui eventos gerados por automação)</div>
+                        <div class="timeline-box">
+                            ${p.eventos.length === 0 ? `<div class="timeline-item">Nenhum evento registrado ainda.</div>` : p.eventos.map(ev => `
+                                <div class="timeline-item">
+                                    <span class="timeline-icon">${EVENTO_ICONE[ev.tipo] || "•"}</span>${escapeHtml(ev.descricao)}
+                                    <span class="timeline-time">${formatarDataHora(ev.criado_em)}</span>
+                                </div>
+                            `).join("")}
+                        </div>
+                    </div>
                 </div>
             </div>
         `;
@@ -936,37 +1161,43 @@ function toggleDetalhe(id) {
     arrow.classList.toggle("rotated");
 }
 
-function resolverPendencia(id, idx) {
-    const paciente = pacientes.find(p => p.id === id);
-    if (!paciente) return;
-    const pend = paciente.pendencias[idx];
-    if (!pend) return;
-    paciente.pendencias.splice(idx, 1);
-    paciente.concluidos.push(pend.desc);
-    filtrarPacientes();
-    atualizarDashboard();
+async function resolverPendencia(pacienteId, pendenciaId) {
+    try {
+        await apiJson(`/pacientes/${pacienteId}/pendencias/${pendenciaId}/resolver`, "POST");
+        await carregarPacientes();
+        filtrarPacientes();
+        atualizarDashboard();
+    } catch (e) {
+        alert("Não foi possível resolver a pendência. Tente novamente.");
+    }
 }
 
-function excluirPaciente(id) {
+async function excluirPaciente(id) {
     const paciente = pacientes.find(p => p.id === id);
     if (!paciente) return;
     if (!confirm(`Remover "${paciente.nome}" da lista de jornadas cirúrgicas?`)) return;
-    pacientes = pacientes.filter(p => p.id !== id);
-    filtrarPacientes();
-    atualizarDashboard();
+    try {
+        await apiJson(`/pacientes/${id}`, "DELETE");
+        await carregarPacientes();
+        filtrarPacientes();
+        atualizarDashboard();
+    } catch (e) {
+        alert("Não foi possível remover o paciente. Tente novamente.");
+    }
 }
 
 function renderFluxo() {
     const container = document.getElementById("fluxo-visual");
     const etapas = [
         { nome: "Solicitação Cirúrgica", desc: "Formulário digital preenchido pelo cirurgião ou secretaria", ator: "Cirurgião / Secretaria", icone: "📝" },
-        { nome: "Cadastro Único", desc: "Criação da jornada do paciente no sistema", ator: "Sistema", icone: "👤" },
-        { nome: "Conferência de Campos", desc: "Validação automática dos campos obrigatórios", ator: "Motor de Regras", icone: "✅" },
-        { nome: "Distribuição de Pendências", desc: "Tarefas enviadas aos setores responsáveis", ator: "Sistema", icone: "📤" },
-        { nome: "Contato com Paciente", desc: "Mensagens automáticas de confirmação e orientação", ator: "Assistente de IA", icone: "📱" },
+        { nome: "Cadastro Único", desc: "Criação da jornada do paciente no banco de dados", ator: "Sistema", icone: "👤" },
+        { nome: "Conferência de Campos", desc: "Validação automática dos campos obrigatórios (servidor)", ator: "Motor de Regras", icone: "✅" },
+        { nome: "Distribuição de Pendências", desc: "Tarefas geradas e enviadas automaticamente aos setores responsáveis", ator: "Automação", icone: "📤" },
+        { nome: "Alerta de Pendência Crítica", desc: "Job diário identifica pendências vencendo/vencidas e registra alerta", ator: "Automação (cron)", icone: "⚠️" },
+        { nome: "Contato com Paciente", desc: "Mensagens automáticas de confirmação e orientação", ator: "Automação (simulada)", icone: "📱" },
         { nome: "Avaliação Pré-Operatória", desc: "Avaliação clínica e anestésica do paciente", ator: "Anestesia / Ambulatório", icone: "💉" },
         { nome: "Conferência Final", desc: "Verificação de exames, materiais e documentos", ator: "Todos os setores", icone: "🔍" },
-        { nome: "Confirmação 72h e 24h", desc: "Alertas automáticos antes da cirurgia", ator: "Assistente de IA", icone: "⏰" },
+        { nome: "Confirmação 72h e 24h", desc: "Alertas automáticos antes da cirurgia", ator: "Automação (cron diário)", icone: "⏰" },
         { nome: "Liberação Humana", desc: "Aprovação final por profissionais autorizados", ator: "Coordenação Cirúrgica", icone: "🔓" },
         { nome: "Cirurgia Realizada", desc: "Registro do resultado e encerramento da jornada", ator: "Centro Cirúrgico", icone: "🔬" }
     ];
@@ -987,6 +1218,27 @@ function renderFluxo() {
 }
 
 // ============================================================
+// AUTOMAÇÕES (disparo manual, além do agendamento diário no servidor)
+// ============================================================
+async function executarAutomacoes() {
+    const btn = document.getElementById("btn-automacoes");
+    const resultado = document.getElementById("automacoes-resultado");
+    btn.disabled = true;
+    resultado.textContent = "Executando automações...";
+    try {
+        const r = await apiJson("/jobs/run", "POST");
+        await carregarPacientes();
+        filtrarPacientes();
+        atualizarDashboard();
+        resultado.textContent = `Concluído: ${r.alertas} alerta(s) de pendência gerado(s), ${r.mensagens} mensagem(ns) de confirmação simulada(s).`;
+    } catch (e) {
+        resultado.textContent = "Falha ao executar automações. Verifique o servidor.";
+    } finally {
+        btn.disabled = false;
+    }
+}
+
+// ============================================================
 // FILTROS
 // ============================================================
 function filtrarPacientes() {
@@ -999,7 +1251,7 @@ function filtrarPacientes() {
             p.nome.toLowerCase().includes(search) ||
             p.cns.includes(search) ||
             p.procedimento.toLowerCase().includes(search);
-        const matchStatus = !statusFilter || calcularStatusPaciente(p) === statusFilter;
+        const matchStatus = !statusFilter || p.status === statusFilter;
         const matchEsp = !espFilter || p.especialidade === espFilter;
         return matchSearch && matchStatus && matchEsp;
     });
@@ -1015,6 +1267,45 @@ function showTab(tab, btnEl) {
     document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
     document.getElementById(`panel-${tab}`).classList.add("active");
     if (btnEl) btnEl.classList.add("active");
+    if (tab === "auditoria") carregarAuditoria();
+}
+
+// ============================================================
+// AUDITORIA
+// ============================================================
+const AUDIT_ACAO_LABEL = {
+    login: "Login",
+    login_falhou: "Login falhou",
+    logout: "Logout",
+    listar_pacientes: "Listou pacientes",
+    ver_paciente: "Abriu paciente",
+    criar_paciente: "Cadastrou paciente",
+    excluir_paciente: "Excluiu paciente",
+    resolver_pendencia: "Resolveu pendência",
+    alerta_pendencia_critica: "Alerta automático",
+    mensagem_confirmacao_simulada: "Mensagem automática"
+};
+
+async function carregarAuditoria() {
+    const tbody = document.getElementById("audit-body");
+    try {
+        const eventos = await apiGet("/auditoria?limite=200");
+        if (eventos.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="5" class="empty-state">Nenhum evento registrado ainda</td></tr>`;
+            return;
+        }
+        tbody.innerHTML = eventos.map(ev => `
+            <tr>
+                <td>${formatarDataHora(ev.criado_em)}</td>
+                <td>${escapeHtml(ev.usuario_nome)}</td>
+                <td><span class="audit-acao">${escapeHtml(AUDIT_ACAO_LABEL[ev.acao] || ev.acao)}</span></td>
+                <td>${ev.paciente_id ? `#${ev.paciente_id}` : "—"}</td>
+                <td>${escapeHtml(ev.detalhes || "")}</td>
+            </tr>
+        `).join("");
+    } catch (e) {
+        tbody.innerHTML = `<tr><td colspan="5" class="empty-state">Não foi possível carregar a auditoria</td></tr>`;
+    }
 }
 
 // ============================================================
@@ -1023,105 +1314,82 @@ function showTab(tab, btnEl) {
 function limparErrosForm() {
     document.querySelectorAll(".field-error").forEach(el => { el.classList.remove("show"); el.textContent = ""; });
     document.querySelectorAll(".form-input, .form-select").forEach(el => el.classList.remove("invalid"));
+    const banner = document.getElementById("msg-erro-geral");
+    banner.classList.remove("show");
+    banner.textContent = "";
 }
 
 function mostrarErro(campoId, erroId, msg) {
-    document.getElementById(campoId).classList.add("invalid");
+    const campo = document.getElementById(campoId);
+    if (campo) campo.classList.add("invalid");
     const erroEl = document.getElementById(erroId);
-    erroEl.textContent = msg;
-    erroEl.classList.add("show");
+    if (erroEl) {
+        erroEl.textContent = msg;
+        erroEl.classList.add("show");
+    } else {
+        const banner = document.getElementById("msg-erro-geral");
+        banner.textContent = (banner.textContent ? banner.textContent + " " : "") + msg;
+        banner.classList.add("show");
+    }
 }
 
-function salvarSolicitacao(event) {
+const CAMPO_PARA_ERRO_ID = {
+    cns: ["f-cns", "err-cns"],
+    lateralidade: ["f-lateralidade", "err-lateralidade"],
+    data_prevista: ["f-data-prevista", "err-data-prevista"]
+};
+
+async function salvarSolicitacao(event) {
     event.preventDefault();
     limparErrosForm();
     const form = event.target;
     const formData = new FormData(form);
+    const btn = document.getElementById("btn-salvar-solicitacao");
 
-    let valido = true;
-
-    const cns = (formData.get("cns") || "").trim();
-    if (!/^\d{15}$/.test(cns)) {
-        mostrarErro("f-cns", "err-cns", "O CNS deve ter exatamente 15 dígitos numéricos.");
-        valido = false;
-    } else if (pacientes.some(p => p.cns === cns)) {
-        mostrarErro("f-cns", "err-cns", "Já existe um paciente cadastrado com este CNS.");
-        valido = false;
-    }
-
-    const especialidade = formData.get("especialidade");
-    const lateralidade = formData.get("lateralidade");
-    if (especialidade === "Ortopedia" && lateralidade === "Não se aplica") {
-        mostrarErro("f-lateralidade", "err-lateralidade", "Para procedimentos ortopédicos, a lateralidade é obrigatória.");
-        valido = false;
-    }
-
-    const dataPrevista = formData.get("data_prevista");
-    if (dataPrevista && dataPrevista < hojeISO()) {
-        mostrarErro("f-data-prevista", "err-data-prevista", "A data prevista não pode estar no passado.");
-        valido = false;
-    }
-
-    if (!valido) return false;
-
-    // Cria novo paciente
-    const novoPaciente = {
-        id: nextId++,
-        nome: formData.get("nome").trim(),
-        cns: cns,
-        procedimento: formData.get("procedimento").trim(),
-        especialidade: especialidade,
-        lateralidade: lateralidade,
+    const payload = {
+        nome: (formData.get("nome") || "").trim(),
+        cns: (formData.get("cns") || "").trim(),
+        nascimento: formData.get("nascimento"),
+        telefone: formData.get("telefone"),
+        procedimento: (formData.get("procedimento") || "").trim(),
+        especialidade: formData.get("especialidade"),
+        lateralidade: formData.get("lateralidade"),
         cirurgiao: formData.get("cirurgiao"),
-        data: dataPrevista,
+        data_prevista: formData.get("data_prevista"),
         prioridade: formData.get("prioridade"),
-        pendencias: gerarPendenciasIniciais(especialidade, formData.get("observacoes")),
-        concluidos: ["Solicitação cadastrada"],
-        comunicacoes: { confirmado: false, mensagensEnviadas: 1 }
+        observacoes: formData.get("observacoes")
     };
 
-    pacientes.unshift(novoPaciente);
+    btn.disabled = true;
+    try {
+        await apiJson("/pacientes", "POST", payload);
 
-    // Mostra mensagem de sucesso
-    const msg = document.getElementById("msg-sucesso");
-    msg.classList.add("show");
-    setTimeout(() => msg.classList.remove("show"), 6000);
+        const msg = document.getElementById("msg-sucesso");
+        msg.classList.add("show");
+        setTimeout(() => msg.classList.remove("show"), 6000);
 
-    // Limpa formulário
-    form.reset();
-    limparErrosForm();
+        form.reset();
+        limparErrosForm();
 
-    // Atualiza lista e painel geral
-    filtrarPacientes();
-    atualizarDashboard();
-
+        await carregarPacientes();
+        filtrarPacientes();
+        atualizarDashboard();
+    } catch (e) {
+        if (e.status === 400 && e.dados && e.dados.erros) {
+            for (const [campo, msg] of Object.entries(e.dados.erros)) {
+                const par = CAMPO_PARA_ERRO_ID[campo];
+                if (par) mostrarErro(par[0], par[1], msg);
+                else mostrarErro(null, null, msg);
+            }
+        } else {
+            const banner = document.getElementById("msg-erro-geral");
+            banner.textContent = "Não foi possível salvar a solicitação. Verifique se o servidor está rodando.";
+            banner.classList.add("show");
+        }
+    } finally {
+        btn.disabled = false;
+    }
     return false;
-}
-
-function gerarPendenciasIniciais(especialidade, observacoes) {
-    const pends = [];
-    pends.push({ tipo: "regulacao", desc: "AIH pendente de autorização", responsavel: "Regulação", prazo: calcularPrazo(3) });
-    pends.push({ tipo: "avaliacao", desc: "Avaliação anestésica pendente", responsavel: "Anestesia", prazo: calcularPrazo(7) });
-    pends.push({ tipo: "exame", desc: "Exames pré-operatórios pendentes", responsavel: "Ambulatório", prazo: calcularPrazo(5) });
-
-    const obsLower = (observacoes || "").toLowerCase();
-    if (obsLower.includes("prótese") || obsLower.includes("protese")) {
-        pends.push({ tipo: "material", desc: "Prótese não confirmada", responsavel: "OPME", prazo: calcularPrazo(10) });
-    }
-    if (obsLower.includes("uti")) {
-        pends.push({ tipo: "leito", desc: "Reserva de UTI pendente", responsavel: "Internação", prazo: calcularPrazo(7) });
-    }
-    if (especialidade === "Ortopedia") {
-        pends.push({ tipo: "material", desc: "Material ortopédico a confirmar", responsavel: "OPME", prazo: calcularPrazo(10) });
-    }
-
-    return pends;
-}
-
-function calcularPrazo(dias) {
-    const data = new Date();
-    data.setDate(data.getDate() + dias);
-    return data.toISOString().split("T")[0];
 }
 
 function limparFormulario() {
@@ -1133,11 +1401,27 @@ function limparFormulario() {
 // ============================================================
 // INICIALIZAÇÃO
 // ============================================================
-document.addEventListener("DOMContentLoaded", () => {
+async function inicializarApp() {
     document.getElementById("f-data-prevista").min = hojeISO();
-    renderPacientes();
     renderFluxo();
+    try {
+        await carregarPacientes();
+    } catch (e) {
+        document.getElementById("lista-pacientes").innerHTML =
+            `<div class="empty-state">Não foi possível carregar os dados do servidor. Verifique se o backend está rodando (npm start em /server).</div>`;
+    }
+    filtrarPacientes();
     atualizarDashboard();
+}
+
+document.addEventListener("DOMContentLoaded", async () => {
+    const autenticado = await verificarSessao();
+    if (autenticado) {
+        mostrarApp();
+        await inicializarApp();
+    } else {
+        mostrarLogin();
+    }
 });
 </script>
 

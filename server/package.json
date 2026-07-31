@@ -1,0 +1,18 @@
+{
+  "name": "marca-o-cirurgica-server",
+  "version": "1.0.0",
+  "description": "Backend da Central Inteligente de Jornada Cirurgica (SUS) - API + automacoes",
+  "main": "server.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "better-sqlite3": "^11.3.0",
+    "cookie-parser": "^1.4.7",
+    "express": "^4.19.2",
+    "jsonwebtoken": "^9.0.3",
+    "node-cron": "^3.0.3"
+  }
+}

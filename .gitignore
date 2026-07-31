@@ -1,0 +1,7 @@
+node_modules/
+server/jornada.sqlite
+server/jornada.sqlite-shm
+server/jornada.sqlite-wal
+server/server.log
+server/.encryption-key
+server/.jwt-secret
